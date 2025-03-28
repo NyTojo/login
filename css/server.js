@@ -1,38 +1,50 @@
 const express = require('express');
 const mysql = require('mysql2');
-
+const bodyParser = require('body-parser');
 const app = express();
-const port = 3000;
 
-// Connexion à MySQL
+// Middleware pour traiter les données JSON
+app.use(bodyParser.json());
+
+// Connexion à la base de données MySQL
 const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'nytojo',   // Remplace par ton utilisateur MySQL
-    password: '1313', // Remplace par ton mot de passe
-    database: 'css'        // Remplace par le nom de ta base
+    host: 'localhost', // Remplacez par l'hôte de votre base de données
+    user: 'root', // Remplacez par votre nom d'utilisateur
+    password: 'Lavalavabe2025', // Remplacez par votre mot de passe
+    database: 'nytojo' // Remplacez par votre nom de base de données
 });
 
-// Vérifier la connexion
-db.connect(err => {
+// Vérifier la connexion à la base de données
+db.connect((err) => {
     if (err) {
-        console.error('Erreur de connexion à la base de données :', err);
-    } else {
-        console.log('Connecté à MySQL');
+        console.error('Erreur de connexion à la base de données:', err.stack);
+        return;
     }
+    console.log('Connecté à la base de données MySQL');
 });
 
-// Route pour récupérer des données
-app.get('/', (req, res) => {
-    db.query('SELECT * FROM ta_table LIMIT 5', (err, results) => {
+// Route pour la connexion
+app.post('/login', (req, res) => {
+    const { email, password } = req.body;
+
+    // Requête SQL pour vérifier l'email et le mot de passe
+    const query = 'SELECT * FROM utilisateurs WHERE email = ? AND mot_de_passe = ?';
+    
+    db.query(query, [email, password], (err, results) => {
         if (err) {
             console.error(err);
-            res.status(500).send('Erreur serveur');
+            return res.status(500).json({ message: 'Erreur serveur' });
+        }
+
+        if (results.length > 0) {
+            res.status(200).json({ message: 'Connexion réussie' });
         } else {
-            res.json(results);
+            res.status(400).json({ message: 'Identifiants incorrects' });
         }
     });
 });
 
-app.listen(port, () => {
-    console.log(`Serveur lancé sur http://localhost:${port}`);
+// Lancer le serveur
+app.listen(3000, () => {
+    console.log('Serveur en écoute sur le port 3000');
 });
